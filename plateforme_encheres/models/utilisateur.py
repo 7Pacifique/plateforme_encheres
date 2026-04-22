@@ -29,3 +29,14 @@ class Utilisateur:
     def crediter(self, montant) :
         self.solde += montant
         self.historique.append("credit", montant)
+
+    def addict(self):
+        return {
+            "nom": self.nom,
+            "email": self.email,
+            "mot_de_passe": self.mot_de_passe,
+            "solde": self.solde,
+            "historique": self.historique
+        }
+    def __str__(self):
+        return f"{self.nom} | Solde : {self.solde} FCFA"

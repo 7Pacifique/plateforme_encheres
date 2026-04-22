@@ -18,3 +18,10 @@ class Utilisateur:
         self.solde = 10000
         self.historique = []
         self.encheres_en_cours = set()
+
+    def debiter(self, montant):
+        if montant > self.solde:
+            return False
+        self.solde -= montant
+        self.historique.append(("debit", montant))
+        return True

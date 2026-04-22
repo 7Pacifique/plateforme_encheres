@@ -25,3 +25,7 @@ class Utilisateur:
         self.solde -= montant
         self.historique.append(("debit", montant))
         return True
+    
+    def crediter(self, montant) :
+        self.solde += montant
+        self.historique.append("credit", montant)

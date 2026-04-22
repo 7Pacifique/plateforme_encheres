@@ -47,3 +47,44 @@ class Plateforme:
     def deconnecter(self):
         self.utilisateur_connecte = None
         print("Vous êtes déconnecté.")    
+
+    def mettre_en_vente(self, titre, description, prix_depart):
+        if not self.utilisateur_connecte:
+            print("Vous devez être connecté pour vendre un objet.")
+            return False
+        if prix_depart <= 0:
+            print("Le prix de départ doit être supérieur à zéro.")
+            return False
+        objet = Objet(titre, description, prix_depart, self.utilisateur_connecte.email)
+        self.objets.append(objet)
+        print(f"Objet '{titre}' mis en vente à {prix_depart} FCFA.")
+        return True
+
+    def faire_une_mise(self, titre_objet, montant):
+        if not self.utilisateur_connecte:
+            print("Vous devez être connecté pour enchérir.")
+            return False
+        objet = self._trouver_objet(titre_objet)
+        if not objet:
+            print("Objet introuvable.")
+            return False
+        if objet.vendeur_email == self.utilisateur_connecte.email:
+            print("Vous ne pouvez pas enchérir sur votre propre objet.")
+            return False
+        if not self.utilisateur_connecte.debiter(montant):
+            print("Solde insuffisant.")
+            return False
+        if not objet.recevoir_mise(montant, self.utilisateur_connecte.email):
+            print(f"La mise doit être supérieure à {objet.meilleure_offre} FCFA.")
+            self.utilisateur_connecte.crediter(montant)
+            return False
+        enchere = Enchere(titre_objet, self.utilisateur_connecte.email, montant)
+        self.encheres.append(enchere)
+        print(f"Mise de {montant} FCFA acceptée sur '{titre_objet}'.")
+        return True
+
+    def _trouver_objet(self, titre):
+        for objet in self.objets:
+            if objet.titre == titre:
+                return objet
+        return None    

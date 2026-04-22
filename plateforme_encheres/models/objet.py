@@ -19,3 +19,31 @@ class Objet:
         self.meilleur_encherisseur = None
         self.statut = "en_cours"
         self.encherisseurs = set()
+
+    def recevoir_mise(self, montant, email_encherisseur):
+        if self.statut == "cloture":
+            return False
+        if montant <= self.meilleure_offre:
+            return False
+        self.meilleure_offre = montant
+        self.meilleur_encherisseur = email_encherisseur
+        self.encherisseurs.add(email_encherisseur)
+        return True
+
+    def cloturer(self):
+        self.statut = "cloture"
+
+    def to_dict(self):
+        return {
+            "titre": self.titre,
+            "description": self.description,
+            "prix_depart": self.prix_depart,
+            "vendeur_email": self.vendeur_email,
+            "meilleure_offre": self.meilleure_offre,
+            "meilleur_encherisseur": self.meilleur_encherisseur,
+            "statut": self.statut,
+            "encherisseurs": list(self.encherisseurs)
+        }
+
+    def __str__(self):
+        return f"{self.titre} | Offre actuelle : {self.meilleure_offre} FCFA | Statut : {self.statut}"    

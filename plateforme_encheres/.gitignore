@@ -1,0 +1,25 @@
+# Environnement virtuel
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Fichiers de configuration IDE
+.vscode/
+.idea/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Tests / couverture
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Variables d'environnement
+.env

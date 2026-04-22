@@ -18,3 +18,14 @@ class Enchere:
         self.encherisseur_email = encherisseur_email
         self.montant = montant
         self.date_heure = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    def to_dict(self):
+        return {
+            "objet_titre": self.objet_titre,
+            "encherisseur_email": self.encherisseur_email,
+            "montant": self.montant,
+            "date_heure": self.date_heure
+        }
+
+    def __str__(self):
+        return f"{self.encherisseur_email} a mise {self.montant} FCFA sur {self.objet_titre} le {self.date_heure}"    

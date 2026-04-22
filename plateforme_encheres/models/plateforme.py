@@ -88,3 +88,36 @@ class Plateforme:
             if objet.titre == titre:
                 return objet
         return None    
+    
+    def cloturer_enchere(self, titre_objet):
+        objet = self._trouver_objet(titre_objet)
+        if not objet:
+            print("Objet introuvable.")
+            return False
+        if objet.statut == "cloture":
+            print("Cette enchère est déjà clôturée.")
+            return False
+        objet.cloturer()
+        if objet.meilleur_encherisseur:
+            vendeur = self.utilisateurs[objet.vendeur_email]
+            vendeur.crediter(objet.meilleure_offre)
+            print(f"Enchère clôturée. Gagnant : {objet.meilleur_encherisseur} avec {objet.meilleure_offre} FCFA.")
+        else:
+            print("Enchère clôturée. Aucune offre reçue, objet non vendu.")
+        return True
+
+    def afficher_objets(self):
+        if not self.objets:
+            print("Aucun objet en vente pour le moment.")
+            return
+        for objet in self.objets:
+            print(objet)
+
+    def sauvegarder(self):
+        with open("data/utilisateurs.json", "w") as f:
+            json.dump({email: u.to_dict() for email, u in self.utilisateurs.items()}, f, indent=4)
+        with open("data/objets.json", "w") as f:
+            json.dump([o.to_dict() for o in self.objets], f, indent=4)
+        with open("data/encheres.json", "w") as f:
+            json.dump([e.to_dict() for e in self.encheres], f, indent=4)
+        print("Données sauvegardées.")

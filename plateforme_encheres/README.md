@@ -1,4 +1,4 @@
-# Plateforme d'Enchères en Ligne 🏷️
+# Plateforme d'Enchères en Ligne
 
 **Projet 5** — Cours de Programmation Python, Licence 2  
 Université de Parakou | Année 2025-2026

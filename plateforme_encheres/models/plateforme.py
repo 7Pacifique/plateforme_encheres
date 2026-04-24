@@ -18,10 +18,12 @@ from models.enchere import Enchere
 class Plateforme:
 
     def __init__(self):
-        self.utilisateurs = {}
-        self.objets = []
-        self.encheres = []
-        self.utilisateur_connecte = None
+    self.utilisateurs = {}
+    self.objets = []
+    self.encheres = []
+    self.utilisateur_connecte = None
+    self.charger()
+
     def inscrire(self, nom, email, mot_de_passe):
         if email in self.utilisateurs:
             print("Cet email est déjà utilisé.")
@@ -121,3 +123,31 @@ class Plateforme:
         with open("data/encheres.json", "w") as f:
             json.dump([e.to_dict() for e in self.encheres], f, indent=4)
         print("Données sauvegardées.")
+
+
+    def charger(self):
+        if os.path.exists("data/utilisateurs.json"):
+            with open("data/utilisateurs.json", "r") as f:
+                try:
+                    data = json.load(f)
+                    for email, u in data.items():
+                        utilisateur = Utilisateur(u["nom"], u["email"], u["mot_de_passe"])
+                        utilisateur.solde = u["solde"]
+                        utilisateur.historique = u["historique"]
+                        self.utilisateurs[email] = utilisateur
+                except:
+                    print("Erreur lors du chargement des utilisateurs.")
+
+        if os.path.exists("data/objets.json"):
+            with open("data/objets.json", "r") as f:
+                try:
+                    data = json.load(f)
+                    for o in data:
+                        objet = Objet(o["titre"], o["description"], o["prix_depart"], o["vendeur_email"])
+                        objet.meilleure_offre = o["meilleure_offre"]
+                        objet.meilleur_encherisseur = o["meilleur_encherisseur"]
+                        objet.statut = o["statut"]
+                        objet.encherisseurs = set(o["encherisseurs"])
+                        self.objets.append(objet)
+                except:
+                    print("Erreur lors du chargement des objets.")    

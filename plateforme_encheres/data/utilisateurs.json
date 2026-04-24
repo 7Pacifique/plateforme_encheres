@@ -1,1 +1,40 @@
-[]
+[
+  {
+    "id": 1,
+    "nom": "ASSOCLE Pacifique",
+    "email": "ppassocle@gmail.com",
+    "mot_de_passe": "Pacifique",
+    "solde": 5500.0,
+    "historique": [
+      [
+        "debit",
+        4500.0,
+        "Mise enchère #2"
+      ]
+    ],
+    "objets_en_vente": [
+      1
+    ],
+    "encheres_participees": [
+      2
+    ]
+  },
+  {
+    "id": 2,
+    "nom": "pacifiqueaoyi@gmail.com",
+    "email": "pacifiqueaoyi@gmail.com",
+    "mot_de_passe": "Pacifique",
+    "solde": 14500.0,
+    "historique": [
+      [
+        "credit",
+        4500.0,
+        "Vente objet #2"
+      ]
+    ],
+    "objets_en_vente": [
+      2
+    ],
+    "encheres_participees": []
+  }
+]

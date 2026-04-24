@@ -260,3 +260,184 @@ class TestPlateforme:
     def test_categories_est_set(self):
         p = self._nouvelle_plateforme()
         assert isinstance(p.categories, set)
+
+
+# ══ Persistance JSON (Bloc 4) ═════════════════════════════════════════════════
+
+class TestPersistanceJSON:
+    """Tests dédiés à la persistance — vérifient que les données
+    survivent à un redémarrage complet de la Plateforme."""
+
+    def _nouvelle_plateforme(self):
+        import models.plateforme as mp
+        tmp = tempfile.mkdtemp()
+        mp.FICHIER_UTILISATEURS = os.path.join(tmp, "utilisateurs.json")
+        mp.FICHIER_OBJETS      = os.path.join(tmp, "objets.json")
+        mp.FICHIER_ENCHERES    = os.path.join(tmp, "encheres.json")
+        self._tmp = tmp
+        return Plateforme()
+
+    def _recharger(self):
+        """Simule un redémarrage : crée une nouvelle Plateforme sur les mêmes fichiers."""
+        return Plateforme()
+
+    # ── Utilisateurs ─────────────────────────────────────────────────────────
+
+    def test_utilisateur_survit_redemarrage(self):
+        """Un utilisateur inscrit doit être rechargé correctement."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+
+        p2 = self._recharger()
+        assert "alice@mail.com" in p2.utilisateurs
+        assert p2.utilisateurs["alice@mail.com"].nom == "Alice"
+
+    def test_solde_survit_redemarrage(self):
+        """Le solde modifié doit être conservé après redémarrage."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.utilisateur_connecte.crediter(500.0, "test")
+        p.sauvegarder()
+
+        p2 = self._recharger()
+        assert p2.utilisateurs["alice@mail.com"].solde == 10_500.0
+
+    def test_historique_survit_redemarrage(self):
+        """L'historique des transactions doit être conservé."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.utilisateur_connecte.crediter(200.0, "vente")
+        p.sauvegarder()
+
+        p2 = self._recharger()
+        assert len(p2.utilisateurs["alice@mail.com"].historique) == 1
+
+    # ── Objets ───────────────────────────────────────────────────────────────
+
+    def test_objet_survit_redemarrage(self):
+        """Un objet mis en vente doit être rechargé avec son statut."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+
+        p2 = self._recharger()
+        objets = list(p2.objets.values())
+        assert len(objets) == 1
+        assert objets[0].titre == "Vase"
+        assert objets[0].statut == "actif"
+
+    def test_statut_vendu_survit_redemarrage(self):
+        """Un objet vendu doit conserver son statut 'vendu' après redémarrage."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Livre", "Roman", 300.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.connecter("bob@mail.com", "5678")
+        p.placer_mise(id_enc, 400.0)
+        p.cloturer_enchere(id_enc)
+
+        p2 = self._recharger()
+        objet = list(p2.objets.values())[0]
+        assert objet.statut == "vendu"
+
+    # ── Enchères ─────────────────────────────────────────────────────────────
+
+    def test_enchere_active_survit_redemarrage(self):
+        """Une enchère active doit être rechargée dans encheres_actives."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Tableau", "Art moderne", 1000.0, 2)
+
+        p2 = self._recharger()
+        assert len(p2.encheres_actives) == 1
+
+    def test_mise_survit_redemarrage(self):
+        """La meilleure mise doit être conservée après redémarrage."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.connecter("bob@mail.com", "5678")
+        p.placer_mise(id_enc, 700.0)
+
+        p2 = self._recharger()
+        enchere = p2.encheres[id_enc]
+        assert enchere.montant_actuel == 700.0
+        assert enchere.meilleur_encherisseur == "bob@mail.com"
+
+    def test_historique_mises_survit_redemarrage(self):
+        """L'historique des mises doit être rechargé comme liste de tuples."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.connecter("bob@mail.com", "5678")
+        p.placer_mise(id_enc, 700.0)
+
+        p2 = self._recharger()
+        mises = p2.encheres[id_enc].historique_mises
+        assert isinstance(mises, list)
+        assert isinstance(mises[0], tuple)
+
+    # ── Gestion des erreurs JSON ──────────────────────────────────────────────
+
+    def test_fichier_absent_cree_automatiquement(self):
+        """Si un fichier JSON est absent, il doit être créé vide sans erreur."""
+        import models.plateforme as mp
+        p = self._nouvelle_plateforme()
+        # Supprimer les fichiers
+        for f in [mp.FICHIER_UTILISATEURS, mp.FICHIER_OBJETS, mp.FICHIER_ENCHERES]:
+            if os.path.exists(f):
+                os.remove(f)
+        # Recharger — ne doit pas planter
+        p2 = self._recharger()
+        assert p2.utilisateurs == {}
+        assert p2.objets == {}
+
+    def test_fichier_corrompu_leve_systemexit(self):
+        """Un fichier JSON corrompu doit déclencher SystemExit."""
+        import pytest
+        import models.plateforme as mp
+        p = self._nouvelle_plateforme()
+        # Corrompre le fichier utilisateurs
+        with open(mp.FICHIER_UTILISATEURS, "w") as f:
+            f.write("{ ceci n est pas du json valide }")
+        with pytest.raises(SystemExit):
+            self._recharger()
+
+    # ── Cycle complet ─────────────────────────────────────────────────────────
+
+    def test_cycle_complet_inscription_mise_cloture(self):
+        """Test bout en bout : inscription → mise → clôture → rechargement."""
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Guitare", "Acoustique", 2000.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+
+        p.connecter("bob@mail.com", "5678")
+        p.placer_mise(id_enc, 2500.0)
+        p.cloturer_enchere(id_enc)
+
+        # Vérifier avant rechargement
+        assert p.utilisateurs["alice@mail.com"].solde == 12_500.0
+        assert p.utilisateurs["bob@mail.com"].solde == 7_500.0
+
+        # Recharger et vérifier que tout est intact
+        p2 = self._recharger()
+        assert p2.utilisateurs["alice@mail.com"].solde == 12_500.0
+        assert p2.utilisateurs["bob@mail.com"].solde == 7_500.0
+        assert list(p2.objets.values())[0].statut == "vendu"
+        assert len(p2.encheres_actives) == 0

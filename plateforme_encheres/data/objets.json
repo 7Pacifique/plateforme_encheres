@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": 1,
+    "titre": "L",
+    "description": "L",
+    "prix_depart": 600.0,
+    "vendeur": "ppassocle@gmail.com",
+    "duree_tours": 3,
+    "statut": "non_vendu"
+  },
+  {
+    "id": 2,
+    "titre": "Sac",
+    "description": "SAC",
+    "prix_depart": 3000.0,
+    "vendeur": "pacifiqueaoyi@gmail.com",
+    "duree_tours": 2,
+    "statut": "vendu"
+  }
+]

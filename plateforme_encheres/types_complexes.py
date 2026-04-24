@@ -3,9 +3,6 @@ types_complexes.py
 Démonstration des types de données complexes Python.
 
 Bloc 2 — Fondations : illustration des types utilisés dans la Plateforme d'Enchères.
-
-Étudiants : GBESSO Segnon Amour Ozias | ASSOCLE Pacifique
-Cours     : Programmation Python — Licence 2
 """
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 """
 tests/test_enchere.py
-Tests unitaires — Bloc 3 (POO) + prévisions Blocs 4/5.
+Tests unitaires — Bloc 3 (POO)
 
 Couvre : EntiteBase (héritage), Utilisateur, Objet, Enchere, Plateforme.
 Lancer avec : pytest tests/

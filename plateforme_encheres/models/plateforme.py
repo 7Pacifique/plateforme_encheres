@@ -1,10 +1,10 @@
 """
 models/plateforme.py
-Classe Plateforme — chef d'orchestre (n'hérite pas de EntiteBase).
+Classe Plateforme — (n'hérite pas de EntiteBase).
 
 Bloc 3 — POO : modularité, coordination des classes.
 Bloc 4 — Persistance JSON : charger_donnees() / sauvegarder().
-Bloc 6 — Interface CLI : lancer() / afficher_objets() (ASSOCLE Pacifique).
+Bloc 6 — Interface CLI : lancer() / afficher_objets()
 """
 
 import json

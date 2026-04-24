@@ -2,8 +2,6 @@
 main.py
 Point d'entrée de la Plateforme d'Enchères en Ligne.
 
-Bloc 6 — Interface CLI complète.
-Inspiré du travail de ASSOCLE Pacifique, corrigé et intégré.
 """
 
 from models.plateforme import Plateforme

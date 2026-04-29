@@ -4,7 +4,7 @@ Classe Plateforme — (n'hérite pas de EntiteBase).
 
 Bloc 3 — POO : modularité, coordination des classes.
 Bloc 4 — Persistance JSON : charger_donnees() / sauvegarder().
-Bloc 6 — Interface CLI : lancer() / afficher_objets()
+Bloc 6 — Interface CLI : lancer() / afficher_objets().
 """
 
 import json
@@ -14,6 +14,11 @@ from datetime import datetime
 from models.utilisateur import Utilisateur
 from models.objet import Objet
 from models.enchere import Enchere
+from models.exceptions import (
+    EmailDejaUtiliseError, IdentifiantsInvalidesError, ChampVideError,
+    PrixInvalideError, SoldeInsuffisantError, VendeurEncheritError,
+    MiseTropBasseError, EnchereIntrouvableError, EnchereClotureeError,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 FICHIER_UTILISATEURS = os.path.join(DATA_DIR, "utilisateurs.json")
@@ -86,9 +91,9 @@ class Plateforme:
             Utilisateur créé, ou None si email déjà pris ou champ vide.
         """
         if not nom or not email or not mot_de_passe:
-            return None
+            raise ChampVideError("Tous les champs sont obligatoires.")
         if email in self.utilisateurs:
-            return None
+            raise EmailDejaUtiliseError(f"L'email '{email}' est déjà utilisé.")
         u = Utilisateur.inscrire(nom, email, mot_de_passe)
         self.utilisateurs[u.email] = u
         self.sauvegarder()
@@ -101,10 +106,10 @@ class Plateforme:
             Utilisateur connecté, ou None si identifiants incorrects.
         """
         u = self.utilisateurs.get(email)
-        if u and u.se_connecter(email, mot_de_passe):
-            self.utilisateur_connecte = u
-            return u
-        return None
+        if not u or not u.se_connecter(email, mot_de_passe):
+            raise IdentifiantsInvalidesError("Email ou mot de passe incorrect.")
+        self.utilisateur_connecte = u
+        return u
 
     def deconnecter(self) -> None:
         """Déconnecte l'utilisateur actif et sauvegarde."""
@@ -122,9 +127,11 @@ class Plateforme:
             Objet créé, ou None si non connecté ou prix invalide.
         """
         if not self.utilisateur_connecte:
-            return None
+            raise IdentifiantsInvalidesError("Vous devez être connecté.")
+        if not titre or not description:
+            raise ChampVideError("Titre et description sont obligatoires.")
         if prix_depart <= 0:
-            return None
+            raise PrixInvalideError("Le prix de départ doit être supérieur à zéro.")
 
         objet = Objet(titre, description, prix_depart,
                       self.utilisateur_connecte.email, duree_tours)
@@ -160,29 +167,35 @@ class Plateforme:
             True si la mise est acceptée, False sinon.
         """
         if not self.utilisateur_connecte:
-            return False
+            raise IdentifiantsInvalidesError("Vous devez être connecté.")
 
         enchere = self.encheres.get(id_enchere)
-        if not enchere or enchere.est_cloturee:
-            return False
+        if not enchere:
+            raise EnchereIntrouvableError(f"Enchère #{id_enchere} introuvable.")
+        if enchere.est_cloturee:
+            raise EnchereClotureeError(f"L'enchère #{id_enchere} est déjà clôturée.")
 
         objet = self.objets.get(enchere.id_objet)
         if not objet:
-            return False
+            raise EnchereIntrouvableError("Objet associé introuvable.")
 
-        # Restriction CDC : un vendeur ne peut pas miser sur son propre objet
         if objet.vendeur == self.utilisateur_connecte.email:
-            return False
+            raise VendeurEncheritError("Vous ne pouvez pas miser sur votre propre objet.")
 
         if self.utilisateur_connecte.solde < montant:
-            return False
+            raise SoldeInsuffisantError(
+                f"Solde insuffisant. Disponible : {self.utilisateur_connecte.solde} FCFA."
+            )
 
-        if enchere.placer_mise(self.utilisateur_connecte.email, montant):
-            self.utilisateur_connecte.debiter(montant, f"Mise enchère #{id_enchere}")
-            self.utilisateur_connecte.rejoindre_enchere(id_enchere)
-            self.sauvegarder()
-            return True
-        return False
+        if not enchere.placer_mise(self.utilisateur_connecte.email, montant):
+            raise MiseTropBasseError(
+                f"La mise doit être supérieure à {enchere.montant_actuel} FCFA."
+            )
+
+        self.utilisateur_connecte.debiter(montant, f"Mise enchère #{id_enchere}")
+        self.utilisateur_connecte.rejoindre_enchere(id_enchere)
+        self.sauvegarder()
+        return True
 
     def cloturer_enchere(self, id_enchere: int) -> dict | None:
         """Clôture une enchère et effectue les transactions financières.
@@ -191,8 +204,10 @@ class Plateforme:
             dict résultat de la clôture, ou None si introuvable/déjà clôturée.
         """
         enchere = self.encheres.get(id_enchere)
-        if not enchere or enchere.est_cloturee:
-            return None
+        if not enchere:
+            raise EnchereIntrouvableError(f"Enchère #{id_enchere} introuvable.")
+        if enchere.est_cloturee:
+            raise EnchereClotureeError(f"L'enchère #{id_enchere} est déjà clôturée.")
 
         resultat = enchere.cloturer()
         objet = self.objets.get(enchere.id_objet)

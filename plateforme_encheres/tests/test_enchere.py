@@ -2,11 +2,11 @@
 tests/test_enchere.py
 Tests unitaires — Bloc 3 (POO)
 
-Couvre : EntiteBase (héritage), Utilisateur, Objet, Enchere, Plateforme.
+Prends en compte EntiteBase (héritage), Utilisateur, Objet, Enchere, Plateforme.
 Lancer avec : pytest tests/
 """
 
-import sys, os, json, tempfile
+import sys, os, json, tempfile, pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from models.base import EntiteBase
@@ -223,7 +223,8 @@ class TestPlateforme:
     def test_inscription_email_duplique(self):
         p = self._nouvelle_plateforme()
         p.inscrire("Alice", "alice@mail.com", "1234")
-        assert p.inscrire("Alice2", "alice@mail.com", "5678") is None
+        with pytest.raises(Exception):
+            p.inscrire("Alice2", "alice@mail.com", "5678")
 
     def test_connexion_succes(self):
         p = self._nouvelle_plateforme()
@@ -233,7 +234,8 @@ class TestPlateforme:
     def test_connexion_echec(self):
         p = self._nouvelle_plateforme()
         p.inscrire("Alice", "alice@mail.com", "1234")
-        assert p.connecter("alice@mail.com", "wrong") is None
+        with pytest.raises(Exception):
+            p.connecter("alice@mail.com", "wrong")
 
     def test_vendeur_ne_peut_pas_encherir(self):
         p = self._nouvelle_plateforme()
@@ -241,7 +243,8 @@ class TestPlateforme:
         p.connecter("alice@mail.com", "1234")
         p.deposer_objet("Vase", "Ancien", 500.0, 1)
         id_enc = list(p.encheres.keys())[-1]
-        assert p.placer_mise(id_enc, 600.0) is False
+        with pytest.raises(Exception):
+            p.placer_mise(id_enc, 600.0)
 
     def test_solde_insuffisant(self):
         p = self._nouvelle_plateforme()
@@ -251,7 +254,8 @@ class TestPlateforme:
         p.deposer_objet("Vase", "Ancien", 500.0, 1)
         id_enc = list(p.encheres.keys())[-1]
         p.connecter("bob@mail.com", "5678")
-        assert p.placer_mise(id_enc, 50_000.0) is False
+        with pytest.raises(Exception):
+            p.placer_mise(id_enc, 50_000.0)
 
     def test_utilisateurs_est_dict(self):
         p = self._nouvelle_plateforme()
@@ -441,3 +445,159 @@ class TestPersistanceJSON:
         assert p2.utilisateurs["bob@mail.com"].solde == 7_500.0
         assert list(p2.objets.values())[0].statut == "vendu"
         assert len(p2.encheres_actives) == 0
+
+
+# ══ Exceptions (Bloc 5) ═══════════════════════════════════════════════════════
+
+from models.exceptions import (
+    EmailDejaUtiliseError, IdentifiantsInvalidesError, ChampVideError,
+    PrixInvalideError, SoldeInsuffisantError, VendeurEncheritError,
+    MiseTropBasseError, EnchereIntrouvableError, EnchereClotureeError,
+    PlateForme_Erreur,
+)
+
+
+class TestExceptions:
+
+    def _nouvelle_plateforme(self):
+        import models.plateforme as mp
+        tmp = tempfile.mkdtemp()
+        mp.FICHIER_UTILISATEURS = os.path.join(tmp, "utilisateurs.json")
+        mp.FICHIER_OBJETS       = os.path.join(tmp, "objets.json")
+        mp.FICHIER_ENCHERES     = os.path.join(tmp, "encheres.json")
+        return Plateforme()
+
+    # ── Inscription ──────────────────────────────────────────────────────────
+
+    def test_inscription_email_duplique_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        with pytest.raises(EmailDejaUtiliseError):
+            p.inscrire("Alice2", "alice@mail.com", "5678")
+
+    def test_inscription_champ_vide_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        with pytest.raises(ChampVideError):
+            p.inscrire("", "alice@mail.com", "1234")
+        with pytest.raises(ChampVideError):
+            p.inscrire("Alice", "", "1234")
+        with pytest.raises(ChampVideError):
+            p.inscrire("Alice", "alice@mail.com", "")
+
+    # ── Connexion ────────────────────────────────────────────────────────────
+
+    def test_connexion_mauvais_mdp_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        with pytest.raises(IdentifiantsInvalidesError):
+            p.connecter("alice@mail.com", "wrong")
+
+    def test_connexion_email_inconnu_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        with pytest.raises(IdentifiantsInvalidesError):
+            p.connecter("inconnu@mail.com", "1234")
+
+    # ── Dépôt d'objet ────────────────────────────────────────────────────────
+
+    def test_deposer_objet_prix_nul_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        with pytest.raises(PrixInvalideError):
+            p.deposer_objet("Vase", "Ancien", 0.0, 1)
+
+    def test_deposer_objet_prix_negatif_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        with pytest.raises(PrixInvalideError):
+            p.deposer_objet("Vase", "Ancien", -100.0, 1)
+
+    def test_deposer_objet_champ_vide_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        with pytest.raises(ChampVideError):
+            p.deposer_objet("", "Ancien", 500.0, 1)
+
+    # ── Mises ────────────────────────────────────────────────────────────────
+
+    def test_mise_vendeur_sur_son_objet_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        with pytest.raises(VendeurEncheritError):
+            p.placer_mise(id_enc, 600.0)
+
+    def test_mise_solde_insuffisant_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.connecter("bob@mail.com", "5678")
+        with pytest.raises(SoldeInsuffisantError):
+            p.placer_mise(id_enc, 50_000.0)
+
+    def test_mise_trop_basse_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.connecter("bob@mail.com", "5678")
+        with pytest.raises(MiseTropBasseError):
+            p.placer_mise(id_enc, 500.0)
+
+    def test_mise_enchere_introuvable_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("bob@mail.com", "5678")
+        with pytest.raises(EnchereIntrouvableError):
+            p.placer_mise(999, 600.0)
+
+    def test_mise_enchere_cloturee_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.inscrire("Bob", "bob@mail.com", "5678")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.cloturer_enchere(id_enc)
+        p.connecter("bob@mail.com", "5678")
+        with pytest.raises(EnchereClotureeError):
+            p.placer_mise(id_enc, 600.0)
+
+    # ── Clôture ──────────────────────────────────────────────────────────────
+
+    def test_cloturer_enchere_introuvable_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        with pytest.raises(EnchereIntrouvableError):
+            p.cloturer_enchere(999)
+
+    def test_cloturer_enchere_deja_cloturee_leve_exception(self):
+        p = self._nouvelle_plateforme()
+        p.inscrire("Alice", "alice@mail.com", "1234")
+        p.connecter("alice@mail.com", "1234")
+        p.deposer_objet("Vase", "Ancien", 500.0, 1)
+        id_enc = list(p.encheres.keys())[-1]
+        p.cloturer_enchere(id_enc)
+        with pytest.raises(EnchereClotureeError):
+            p.cloturer_enchere(id_enc)
+
+    # ── Héritage des exceptions ──────────────────────────────────────────────
+
+    def test_toutes_exceptions_heritent_plateforme_erreur(self):
+        """Toutes les exceptions métier doivent hériter de PlateForme_Erreur."""
+        exceptions = [
+            EmailDejaUtiliseError, IdentifiantsInvalidesError, ChampVideError,
+            PrixInvalideError, SoldeInsuffisantError, VendeurEncheritError,
+            MiseTropBasseError, EnchereIntrouvableError, EnchereClotureeError,
+        ]
+        for exc_class in exceptions:
+            assert issubclass(exc_class, PlateForme_Erreur), \
+                f"{exc_class.__name__} ne hérite pas de PlateForme_Erreur"

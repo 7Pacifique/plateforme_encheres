@@ -16,5 +16,59 @@
     "vendeur": "pacifiqueaoyi@gmail.com",
     "duree_tours": 2,
     "statut": "vendu"
+  },
+  {
+    "id": 3,
+    "titre": "Sac",
+    "description": "Sac",
+    "prix_depart": 3000.0,
+    "vendeur": "ppassocle@gmail.com",
+    "duree_tours": 1,
+    "statut": "vendu"
+  },
+  {
+    "id": 4,
+    "titre": "Brosse",
+    "description": "Brosse a dent",
+    "prix_depart": 500.0,
+    "vendeur": "ppassocle@gmail.com",
+    "duree_tours": 1,
+    "statut": "actif"
+  },
+  {
+    "id": 5,
+    "titre": "Chaussure Adidas",
+    "description": "Belle chaussure de luxe",
+    "prix_depart": 5000.0,
+    "vendeur": "pacifiqueaoyi@gmail.com",
+    "duree_tours": 1,
+    "statut": "actif"
+  },
+  {
+    "id": 6,
+    "titre": "Telephone",
+    "description": "TECNO",
+    "prix_depart": 400.0,
+    "vendeur": "ppassocle@gmail.com",
+    "duree_tours": 1,
+    "statut": "actif"
+  },
+  {
+    "id": 7,
+    "titre": "Calculatrice",
+    "description": "Casio",
+    "prix_depart": 300.0,
+    "vendeur": "pacifiqueaoyi@gmail.com",
+    "duree_tours": 1,
+    "statut": "actif"
+  },
+  {
+    "id": 8,
+    "titre": "Brosse",
+    "description": "Colgate",
+    "prix_depart": 200.0,
+    "vendeur": "ppassocle@gmail.com",
+    "duree_tours": 2,
+    "statut": "actif"
   }
 ]

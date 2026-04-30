@@ -44,6 +44,7 @@ class Objet(EntiteBase):
 
         # Attribut public
         self.duree_tours: int = duree_tours
+        self.mises_restantes: int = duree_tours
 
     # ── Propriétés (encapsulation) ───────────────────────────────────────────
 

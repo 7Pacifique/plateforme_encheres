@@ -178,6 +178,9 @@ class Plateforme:
         objet = self.objets.get(enchere.id_objet)
         if not objet:
             raise EnchereIntrouvableError("Objet associé introuvable.")
+        
+        if objet.mises_restantes <= 0:
+            raise EnchereClotureeError(f"Cette enchère a atteint sa limite de {objet.duree_tours} mise(s).")
 
         if objet.vendeur == self.utilisateur_connecte.email:
             raise VendeurEncheritError("Vous ne pouvez pas miser sur votre propre objet.")
@@ -194,12 +197,32 @@ class Plateforme:
 
         self.utilisateur_connecte.debiter(montant, f"Mise enchère #{id_enchere}")
         self.utilisateur_connecte.rejoindre_enchere(id_enchere)
+        objet.mises_restantes -= 1
         self.sauvegarder()
+
+        if objet.mises_restantes == 0:
+            self.cloturer_enchere(id_enchere, auto=True)
+
         return True
 
-    def cloturer_enchere(self, id_enchere: int) -> dict | None:
+    def cloturer_enchere(self, id_enchere: int, auto: bool = False) -> dict | None:
         """Clôture une enchère et effectue les transactions financières.
+        Seul le vendeur peut clôturer son enchère.
+        """ 
+        enchere = self.encheres.get(id_enchere)
+        if not enchere:
+            raise EnchereIntrouvableError(f"Enchère #{id_enchere} introuvable.")
+        if enchere.est_cloturee:
+            raise EnchereClotureeError(f"L'enchère #{id_enchere} est déjà clôturée.")
+        
+        objet = self.objets.get(enchere.id_objet)
+        if not auto :
+            if objet.vendeur != self.utilisateur_connecte.email:
+                raise PermissionError("Seul le vendeur peut clôturer cette enchère.")
+        
+        resultat = enchere.cloturer()
 
+        """
         Returns:
             dict résultat de la clôture, ou None si introuvable/déjà clôturée.
         """
@@ -227,7 +250,7 @@ class Plateforme:
         self.sauvegarder()
         return resultat
 
-    # ── Interface CLI (Bloc 6) ────────────────────────────────────────────────
+    # ── Interface (Bloc 6) ────────────────────────────────────────────────
 
     def lancer(self) -> None:
         """Point d'entrée CLI — implémenté dans main.py."""

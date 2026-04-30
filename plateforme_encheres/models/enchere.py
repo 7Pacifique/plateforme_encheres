@@ -33,6 +33,7 @@ class Enchere(EntiteBase):
         self.__meilleur_encherisseur: str | None = None
         self.__date_fin: str = date_fin
         self.__est_cloturee: bool = False
+        self.gagnant = None
 
         # Type complexe public
         self.historique_mises: list = []  # list de tuples
@@ -107,6 +108,7 @@ class Enchere(EntiteBase):
             'bob@mail.com'
         """
         self.__est_cloturee = True
+        self.gagnant = self.__meilleur_encherisseur
         return {
             "id_enchere": self.id,
             "id_objet": self.__id_objet,

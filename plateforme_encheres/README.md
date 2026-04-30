@@ -65,5 +65,5 @@ python types_complexes.py
 | 2    | Workflow & Fondations     | Livré       |
 | 3    | Architecture POO          | Livré    |
 | 4    | Persistance JSON          | Livré    |
-| 5    | Qualité (Tests)           | À faire    |
-| 6    | Interface CLI & Livraison | À faire    |
+| 5    | Qualité (Tests)           | Livré    |
+| 6    | Interface GUI avec Tkinter & Livraison | Livré    |

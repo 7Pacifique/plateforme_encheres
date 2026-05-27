@@ -98,5 +98,17 @@
       4,
       6
     ]
+  },
+  {
+    "id": 3,
+    "nom": "JHLK",
+    "email": "assocle@gmail.com",
+    "mot_de_passe": "pacifique",
+    "solde": 10000.0,
+    "historique": [],
+    "objets_en_vente": [
+      9
+    ],
+    "encheres_participees": []
   }
 ]

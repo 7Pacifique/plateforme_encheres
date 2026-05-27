@@ -92,6 +92,8 @@ class Plateforme:
         """
         if not nom or not email or not mot_de_passe:
             raise ChampVideError("Tous les champs sont obligatoires.")
+        if "@" not in email or "." not in email:
+            raise IdentifiantsInvalidesError("Email invalide.") 
         if email in self.utilisateurs:
             raise EmailDejaUtiliseError(f"L'email '{email}' est déjà utilisé.")
         u = Utilisateur.inscrire(nom, email, mot_de_passe)

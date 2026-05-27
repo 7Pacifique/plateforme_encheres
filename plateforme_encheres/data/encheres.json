@@ -126,5 +126,14 @@
         "2026-04-30T15:18:58"
       ]
     ]
+  },
+  {
+    "id": 9,
+    "id_objet": 9,
+    "montant_actuel": 150.0,
+    "meilleur_encherisseur": null,
+    "date_fin": "2026-05-27T10:57:07",
+    "est_cloturee": false,
+    "historique_mises": []
   }
 ]

@@ -70,5 +70,14 @@
     "vendeur": "ppassocle@gmail.com",
     "duree_tours": 2,
     "statut": "actif"
+  },
+  {
+    "id": 9,
+    "titre": "Cahier",
+    "description": "Pour ecrire",
+    "prix_depart": 150.0,
+    "vendeur": "assocle@gmail.com",
+    "duree_tours": 3,
+    "statut": "actif"
   }
 ]
